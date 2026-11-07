@@ -19,11 +19,15 @@
   header .flag.on { opacity: 1; background: #24521b; }
   header h1 { margin: 0; font-size: 24px; flex: 1; }
   main { padding: 14px; max-width: 1100px; margin: 0 auto; }
+  .search { width: 100%; font-size: 24px; padding: 14px 16px; border-radius: 10px; border: 4px solid #555;
+            background: #fff; color: #222; margin-top: 4px; }
+  .search:focus { outline: none; border-color: #3a7d2c; }
   h2 { font-size: 22px; margin: 22px 0 12px; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
   .tile { background: #8b8b8b; border: 4px solid; border-color: #c6c6c6 #555 #555 #c6c6c6;
           border-radius: 6px; padding: 10px 6px; text-align: center; color: #fff; text-decoration: none;
           font-size: 15px; font-weight: 600; text-shadow: 1px 1px #333; }
+  .tile[hidden] { display: none; }
   .tile:active { transform: scale(.95); }
   .tile .ic { width: 64px; height: 64px; margin: 0 auto 6px; }
   .tiles.small { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
@@ -62,7 +66,7 @@
   <button id="home" aria-label="Forside">🏠</button>
 </header>
 <main id="app"></main>
-<script src="data.js?v=4"></script>
+<script src="data.js?v=5"></script>
 <script>
 const FEATURED = ['diamond','iron_ingot','gold_ingot','emerald','copper_ingot','netherite_ingot',
   'oak_log','oak_planks','stick','cobblestone','coal','redstone','string','leather','white_wool',
@@ -72,11 +76,13 @@ const TXT = {
   da: { title: 'Hvad kan jeg lave?', tap: 'Tryk på en ting', all: 'Alle ting', uses: 'Det kan du lave med den',
         makes: 'Sådan laver du den', nouse: 'Den kan ikke bruges til at crafte noget.',
         nomake: 'Den kan ikke craftes – den skal findes, graves eller smeltes.',
-        wood: 'Alle slags træ virker – opskrifterne viser bare eg.' },
+        wood: 'Alle slags træ virker – opskrifterne viser bare eg.',
+        search: 'Søg…', none: 'Ingen ting fundet.' },
   en: { title: 'What can I make?', tap: 'Tap a thing', all: 'All things', uses: 'What you can make with it',
         makes: 'How to make it', nouse: 'It can\'t be used for crafting.',
         nomake: 'It can\'t be crafted – find it, mine it or smelt it.',
-        wood: 'Any kind of wood works – the recipes just show oak.' } };
+        wood: 'Any kind of wood works – the recipes just show oak.',
+        search: 'Search…', none: 'Nothing found.' } };
 let LANG = 'da';
 try { if (localStorage.getItem('lang') === 'en') LANG = 'en'; } catch (e) {}
 const t = k => TXT[LANG][k];
@@ -97,7 +103,8 @@ function icon(name) {
   return `<span class="ic"><img loading="lazy" alt="${esc(nm(name))}" src="tex/${it.t}.png"
     data-t="${esc(nm(name))}" onerror="this.outerHTML='<span class=txt>'+esc(this.dataset.t)+'</span>'"></span>`;
 }
-const tile = n => `<a class="tile" href="#/i/${n}">${icon(n)}${esc(nm(n))}</a>`;
+const norm = x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const tile = n => `<a class="tile" data-s="${esc(norm(MC.items[n].da + ' ' + MC.items[n].en))}" href="#/i/${n}">${icon(n)}${esc(nm(n))}</a>`;
 
 function recipeCard(i, hl) {
   const [res, count, grid] = MC.recipes[i];
@@ -111,9 +118,29 @@ function recipeCard(i, hl) {
 
 function home() {
   document.getElementById('title').textContent = t('title');
-  const all = Object.keys(MC.uses).filter(n => !/^stripped_/.test(n)).sort((a, b) => nm(a).localeCompare(nm(b), LANG));
-  app.innerHTML = `<h2>${t('tap')}</h2><div class="tiles">${FEATURED.filter(n => MC.items[n]).map(tile).join('')}</div>
-    <h2>${t('all')}</h2><div class="tiles small">${all.map(tile).join('')}</div>`;
+  const all = [...new Set([...Object.keys(MC.uses), ...Object.keys(MC.makes)])].filter(n => !/^stripped_/.test(n)).sort((a, b) => nm(a).localeCompare(nm(b), LANG));
+  app.innerHTML = `<input id="q" class="search" type="search" placeholder="🔍 ${t('search')}" autocomplete="off" value="${esc(QUERY)}">
+    <div id="feat"><h2>${t('tap')}</h2><div class="tiles">${FEATURED.filter(n => MC.items[n]).map(tile).join('')}</div></div>
+    <h2 id="allh">${t('all')}</h2><div id="all" class="tiles small">${all.map(tile).join('')}</div>
+    <p id="none" class="empty" hidden>${t('none')}</p>`;
+  const q = document.getElementById('q');
+  q.oninput = () => filter(q.value);
+  filter(QUERY);
+}
+
+let QUERY = '';
+function filter(v) {
+  QUERY = v;
+  const w = norm(v.trim());
+  document.getElementById('feat').hidden = !!w;
+  document.getElementById('all').classList.toggle('small', !w);
+  let n = 0;
+  document.querySelectorAll('#all .tile').forEach(el => {
+    const ok = !w || el.dataset.s.includes(w);
+    el.hidden = !ok; if (ok) n++;
+  });
+  document.getElementById('allh').hidden = !n;
+  document.getElementById('none').hidden = !!n;
 }
 
 function item(name) {
@@ -138,7 +165,7 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 document.getElementById('back').onclick = () => history.length > 1 ? history.back() : (location.hash = '');
-document.getElementById('home').onclick = () => { location.hash = ''; };
+document.getElementById('home').onclick = () => { QUERY = ''; location.hash = ''; route(); };
 setLang(LANG);
 if ('serviceWorker' in navigator) {
   const had = !!navigator.serviceWorker.controller;
