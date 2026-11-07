@@ -55,6 +55,18 @@
   .slot.big { width: 74px; height: 74px; position: relative; }
   .count { position: absolute; right: 4px; bottom: 0; font-weight: 800; font-size: 18px; color: #fff; text-shadow: 2px 2px #333; }
   .empty { opacity: .8; font-size: 18px; }
+  [data-say] { cursor: pointer; }
+  [data-say]::after { content: ' 🔊'; font-size: .7em; opacity: .7; }
+  .world { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+  .wcard { background: #4a6fa5; border: 4px solid; border-color: #7fa3d6 #2d4a73 #2d4a73 #7fa3d6; border-radius: 8px;
+           padding: 14px 10px; text-align: center; }
+  .wcard:active { transform: scale(.97); }
+  .pics { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 64px; flex-wrap: wrap; }
+  .pics .ic { width: 56px; height: 56px; }
+  .pics .emo { font-size: 44px; line-height: 1; }
+  .wcard .lbl { margin-top: 10px; font-size: 19px; font-weight: 700; }
+  .wcard[data-say]::after { content: none; }
+  .wcard .lbl::after { content: ' 🔊'; font-size: .7em; opacity: .7; }
 </style>
 </head>
 <body>
@@ -66,7 +78,7 @@
   <button id="home" aria-label="Forside">🏠</button>
 </header>
 <main id="app"></main>
-<script src="data.js?v=5"></script>
+<script src="data.js?v=6"></script>
 <script>
 const FEATURED = ['diamond','iron_ingot','gold_ingot','emerald','copper_ingot','netherite_ingot',
   'oak_log','oak_planks','stick','cobblestone','coal','redstone','string','leather','white_wool',
@@ -77,12 +89,12 @@ const TXT = {
         makes: 'Sådan laver du den', nouse: 'Den kan ikke bruges til at crafte noget.',
         nomake: 'Den kan ikke craftes – den skal findes, graves eller smeltes.',
         wood: 'Alle slags træ virker – opskrifterne viser bare eg.',
-        search: 'Søg…', none: 'Ingen ting fundet.' },
+        search: 'Søg…', none: 'Ingen ting fundet.', world: 'Brug den i verden' },
   en: { title: 'What can I make?', tap: 'Tap a thing', all: 'All things', uses: 'What you can make with it',
         makes: 'How to make it', nouse: 'It can\'t be used for crafting.',
         nomake: 'It can\'t be crafted – find it, mine it or smelt it.',
         wood: 'Any kind of wood works – the recipes just show oak.',
-        search: 'Search…', none: 'Nothing found.' } };
+        search: 'Search…', none: 'Nothing found.', world: 'Use it in the world' } };
 let LANG = 'da';
 try { if (localStorage.getItem('lang') === 'en') LANG = 'en'; } catch (e) {}
 const t = k => TXT[LANG][k];
@@ -111,14 +123,14 @@ function recipeCard(i, hl) {
   const cells = grid.map(g => g
     ? `<a class="slot${g === hl ? ' hl' : ''}" href="#/i/${g}">${icon(g)}</a>`
     : `<span class="slot"></span>`).join('');
-  return `<div class="recipe"><div class="title">${esc(nm(res))}</div>
+  return `<div class="recipe"><div class="title"><span data-say="${esc(nm(res))}">${esc(nm(res))}</span></div>
     <div class="craft"><div class="grid">${cells}</div><span class="arrow">➜</span>
     <a class="slot big" href="#/i/${res}">${icon(res)}${count > 1 ? `<span class="count">${count}</span>` : ''}</a></div></div>`;
 }
 
 function home() {
   document.getElementById('title').textContent = t('title');
-  const all = [...new Set([...Object.keys(MC.uses), ...Object.keys(MC.makes)])].filter(n => !/^stripped_/.test(n)).sort((a, b) => nm(a).localeCompare(nm(b), LANG));
+  const all = [...new Set([...Object.keys(MC.uses), ...Object.keys(MC.makes), ...Object.keys(MC.world)])].filter(n => !/^stripped_/.test(n)).sort((a, b) => nm(a).localeCompare(nm(b), LANG));
   app.innerHTML = `<input id="q" class="search" type="search" placeholder="🔍 ${t('search')}" autocomplete="off" value="${esc(QUERY)}">
     <div id="feat"><h2>${t('tap')}</h2><div class="tiles">${FEATURED.filter(n => MC.items[n]).map(tile).join('')}</div></div>
     <h2 id="allh">${t('all')}</h2><div id="all" class="tiles small">${all.map(tile).join('')}</div>
@@ -143,6 +155,30 @@ function filter(v) {
   document.getElementById('none').hidden = !!n;
 }
 
+function worldCard([pics, da, en]) {
+  const txt = LANG === 'da' ? da : en;
+  const p = pics.map(x => /^[a-z0-9_]+$/.test(x) ? icon(x) : `<span class="emo">${x}</span>`).join('');
+  return `<div class="wcard" data-say="${esc(txt)}"><div class="pics">${p}</div><div class="lbl">${esc(txt)}</div></div>`;
+}
+
+// Højtlæsning med tablettens egen stemme
+function say(text) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/[–×]/g, ' '));
+    u.lang = LANG === 'da' ? 'da-DK' : 'en-GB';
+    const v = speechSynthesis.getVoices().find(v => v.lang.replace('_', '-').toLowerCase().startsWith(LANG));
+    if (v) u.voice = v;
+    u.rate = 0.9;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-say]');
+  if (el) { e.preventDefault(); say(el.dataset.say); }
+});
+try { speechSynthesis.getVoices(); } catch (e) {}
+
 function item(name) {
   const it = MC.items[name];
   if (!it) return home();
@@ -150,8 +186,10 @@ function item(name) {
   const uses = (MC.uses[name] || []).slice().sort((a, b) =>
     /smithing_template/.test(MC.recipes[a][0]) - /smithing_template/.test(MC.recipes[b][0]));
   const makes = MC.makes[name] || [];
-  app.innerHTML = `<div class="hero">${icon(name)}<div><div class="name">${esc(nm(name))}</div></div></div>
+  const world = MC.world[name] || [];
+  app.innerHTML = `<div class="hero">${icon(name)}<div><div class="name" data-say="${esc(nm(name))}">${esc(nm(name))}</div></div></div>
     ${/_(planks|log|slab|stem)$/.test(name) ? `<p class="empty">💡 ${t('wood')}</p>` : ''}
+    ${world.length ? `<h2>🌍 ${t('world')}</h2><div class="world">${world.map(worldCard).join('')}</div>` : ''}
     <h2>⛏️ ${t('uses')}</h2>
     ${uses.length ? `<div class="recipes">${uses.map(i => recipeCard(i, name)).join('')}</div>` : `<p class="empty">${t('nouse')}</p>`}
     <h2>🛠️ ${t('makes')}</h2>

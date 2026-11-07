@@ -1,0 +1,111 @@
+// "Brug den i verden": [mønster for ting-id, [[billeder], dansk, engelsk], ...]
+// Billede = ting-id (vises med spillets tekstur) eller en emoji.
+module.exports = [
+  [/^flint_and_steel$/, [
+    [['🔥'], 'Tænd ild', 'Light a fire'],
+    [['obsidian', '🌀'], 'Tænd Nether-portal', 'Light a Nether portal'],
+    [['tnt', '💥'], 'Tænd TNT', 'Light TNT']]],
+  [/^fire_charge$/, [
+    [['🔥'], 'Tænd ild', 'Light a fire'],
+    [['obsidian', '🌀'], 'Tænd Nether-portal', 'Light a Nether portal']]],
+  [/_bed$/, [
+    [['🌙', '➜', '☀️'], 'Sov – spring natten over', 'Sleep – skip the night'],
+    [['🏠'], 'Her vågner du igen', 'You respawn here'],
+    [['netherrack', '💥'], 'Eksploderer i Nether og End!', 'Explodes in the Nether and End!']]],
+  [/^torch$/, [
+    [['💡'], 'Lys i mørket', 'Light in the dark'],
+    [['🧟', '🚫'], 'Holder monstre væk', 'Keeps monsters away']]],
+  [/^crafting_table$/, [[['🛠️'], 'Lav ting i 3×3', 'Craft in 3×3']]],
+  [/^furnace$/, [
+    [['raw_iron', '➜', 'iron_ingot'], 'Smelt malm', 'Smelt ore'],
+    [['beef', '➜', 'cooked_beef'], 'Steg mad', 'Cook food'],
+    [['sand', '➜', 'glass'], 'Lav glas', 'Make glass']]],
+  [/^(chest|barrel)$/, [[['📦'], 'Gem dine ting', 'Store your things']]],
+  [/^bucket$/, [
+    [['water_bucket'], 'Hent vand', 'Pick up water'],
+    [['lava_bucket'], 'Hent lava', 'Pick up lava'],
+    [['🐄', '➜', 'milk_bucket'], 'Malk en ko', 'Milk a cow']]],
+  [/^water_bucket$/, [
+    [['💧'], 'Hæld vand ud', 'Pour water'],
+    [['🔥', '🚫'], 'Sluk ild', 'Put out fire'],
+    [['lava_bucket', '➕', '💧', '➜', 'obsidian'], 'Vand på lava = obsidian', 'Water on lava = obsidian']]],
+  [/^lava_bucket$/, [
+    [['furnace'], 'Brændsel i ovnen', 'Fuel for the furnace'],
+    [['lava_bucket', '➕', '💧', '➜', 'obsidian'], 'Lava + vand = obsidian', 'Lava + water = obsidian']]],
+  [/^milk_bucket$/, [[['🤢', '➜', '😊'], 'Fjerner gift og effekter', 'Removes poison and effects']]],
+  [/^bone_meal$/, [[['🌱', '➜', '🌳'], 'Planter vokser hurtigt', 'Plants grow fast']]],
+  [/^bone$/, [[['🐺', '➜', '🐕'], 'Tæm en ulv', 'Tame a wolf']]],
+  [/^wheat$/, [[['🐄', '🐑', '❤️'], 'Fodr køer og får', 'Feed cows and sheep']]],
+  [/^wheat_seeds$/, [
+    [['farmland', '➜', 'wheat'], 'Plant – bliver til hvede', 'Plant – grows wheat'],
+    [['🐔', '❤️'], 'Fodr høns', 'Feed chickens']]],
+  [/^carrot$/, [
+    [['farmland', '➜', 'carrot'], 'Plant flere gulerødder', 'Plant more carrots'],
+    [['🐖', '🐇', '❤️'], 'Fodr grise og kaniner', 'Feed pigs and rabbits']]],
+  [/^potato$/, [[['farmland', '➜', 'potato'], 'Plant flere kartofler', 'Plant more potatoes']]],
+  [/^shears$/, [
+    [['🐑', '➜', 'white_wool'], 'Klip uld af får', 'Shear sheep for wool'],
+    [['oak_leaves'], 'Saml blade', 'Collect leaves']]],
+  [/^fishing_rod$/, [[['🎣', '➜', 'cod'], 'Fang fisk', 'Catch fish']]],
+  [/^saddle$/, [[['🐴', '🐖'], 'Rid på hest eller gris', 'Ride a horse or pig']]],
+  [/^carrot_on_a_stick$/, [[['🐖', '➜'], 'Styr grisen du rider på', 'Steer the pig you ride']]],
+  [/^lead$/, [[['🐄', '🪢'], 'Tag dyr i snor', 'Walk animals on a leash']]],
+  [/^name_tag$/, [[['🐶', '🏷️'], 'Giv dit dyr et navn', 'Name your pet']]],
+  [/^bow$|^crossbow$/, [[['arrow', '➜', '🎯'], 'Skyd med pile', 'Shoot arrows']]],
+  [/^arrow$/, [[['bow'], 'Skyd med en bue', 'Shoot with a bow']]],
+  [/^shield$/, [[['🛡️', '🏹', '🧨'], 'Bloker pile og eksplosioner', 'Block arrows and explosions']]],
+  [/^compass$/, [[['🧭', '➜', '🏠'], 'Peger hjem mod spawn', 'Points home to spawn']]],
+  [/^clock$/, [[['☀️', '🌙'], 'Viser dag og nat', 'Shows day and night']]],
+  [/^map$/, [[['🗺️'], 'Tegner et kort', 'Draws a map']]],
+  [/^spyglass$/, [[['🔭'], 'Se langt væk', 'See far away']]],
+  [/^tnt$/, [[['flint_and_steel', '➜', '💥'], 'Tænd – og løb!', 'Light it – and run!']]],
+  [/^ender_pearl$/, [[['🤾', '➜', '✨'], 'Kast – du teleporteres', 'Throw – you teleport']]],
+  [/^ender_eye$/, [
+    [['🤾', '➜', '🏰'], 'Kast – viser vej til fæstningen', 'Throw – shows the way to the stronghold'],
+    [['end_portal_frame'], 'Fyld End-portalen', 'Fill the End portal']]],
+  [/^enchanting_table$/, [[['diamond_sword', '➕', 'lapis_lazuli', '➜', '✨'], 'Fortryl ting', 'Enchant items']]],
+  [/^anvil$/, [
+    [['🔧'], 'Reparer ting', 'Repair items'],
+    [['name_tag', '✏️'], 'Skriv navn på ting', 'Rename items']]],
+  [/^carved_pumpkin$/, [
+    [['snow_block', '➕', 'snow_block', '➕', 'carved_pumpkin', '➜', '⛄'], 'Byg en snemand', 'Build a snow golem'],
+    [['iron_block', '➕', 'carved_pumpkin', '➜', '🤖'], '4 jernblokke + græskar = jerngolem', '4 iron blocks + pumpkin = iron golem'],
+    [['🙂', '➜', '🚫😠'], 'Bær den: Endermen bliver ikke sure', 'Wear it: Endermen stay calm']]],
+  [/^snow_block$/, [[['snow_block', '➕', 'snow_block', '➕', 'carved_pumpkin', '➜', '⛄'], 'Byg en snemand', 'Build a snow golem']]],
+  [/^iron_block$/, [[['iron_block', '➕', 'carved_pumpkin', '➜', '🤖'], '4 jernblokke + græskar = jerngolem', '4 iron blocks + pumpkin = iron golem']]],
+  [/^hay_block$/, [
+    [['🐴', '❤️'], 'Fodr heste', 'Feed horses'],
+    [['⬇️', '😌'], 'Blød landing', 'Soft landing']]],
+  [/_boat$|_raft$/, [[['🌊', '🚣'], 'Sejl på vand', 'Sail on water']]],
+  [/^minecart$/, [[['rail', '➜', '🎢'], 'Kør på skinner', 'Ride on rails']]],
+  [/^rail$/, [[['minecart', '➜', '🎢'], 'Byg en bane', 'Build a track']]],
+  [/^ladder$/, [[['⬆️'], 'Klatre op og ned', 'Climb up and down']]],
+  [/_door$/, [[['🚪'], 'Ind og ud – zombier kan ikke åbne den', 'In and out – zombies can’t open it']]],
+  [/^cake$/, [[['🍰', '👫'], 'Del med andre – 7 bidder', 'Share – 7 slices']]],
+  [/^golden_apple$|^enchanted_golden_apple$/, [[['❤️', '➕'], 'Ekstra liv og helbredelse', 'Extra hearts and healing']]],
+  [/^firework_rocket$/, [
+    [['🎆'], 'Fyrværkeri', 'Fireworks'],
+    [['elytra', '➜', '🚀'], 'Fart på når du flyver', 'Speed boost when flying']]],
+  [/^elytra$/, [[['🦅'], 'Svæv gennem luften', 'Glide through the air']]],
+  [/^emerald$/, [[['🧑‍🌾', '🔁'], 'Byt med landsbyboere', 'Trade with villagers']]],
+  [/^note_block$/, [[['🎵'], 'Spil toner', 'Play notes']]],
+  [/^jukebox$/, [[['💿', '🎶'], 'Spil musikplader', 'Play music discs']]],
+  [/^lever$|_button$/, [[['redstone', '⚡'], 'Tænd og sluk strøm', 'Turn power on and off']]],
+  [/^redstone$/, [[['⚡', '〰️'], 'Led strøm som en ledning', 'Carries power like a wire']]],
+  [/^piston$|^sticky_piston$/, [[['➡️', 'cobblestone'], 'Skubber blokke', 'Pushes blocks']]],
+  [/^brewing_stand$/, [[['🧪'], 'Bryg trylledrikke', 'Brew potions']]],
+  [/^campfire$/, [[['beef', '➜', 'cooked_beef'], 'Steg mad', 'Cook food']]],
+  [/^brush$/, [[['suspicious_sand', '➜', '🏺'], 'Find skatte i sand', 'Find treasure in sand']]],
+  [/_pickaxe$/, [[['⛏️', 'stone'], 'Grav sten og malm', 'Mine stone and ore']]],
+  [/^wooden_pickaxe$|^golden_pickaxe$/, [[['coal_ore'], 'Kan grave kul', 'Can mine coal']]],
+  [/^stone_pickaxe$/, [[['iron_ore', 'copper_ore', 'lapis_ore'], 'Kan grave jern', 'Can mine iron']]],
+  [/^iron_pickaxe$/, [[['diamond_ore', 'gold_ore', 'redstone_ore'], 'Kan grave diamanter', 'Can mine diamonds']]],
+  [/^diamond_pickaxe$|^netherite_pickaxe$/, [[['obsidian', 'ancient_debris'], 'Kan grave obsidian', 'Can mine obsidian']]],
+  [/_axe$/, [[['oak_log', '🪓'], 'Fæld træer hurtigt', 'Chop trees fast']]],
+  [/_shovel$/, [
+    [['dirt', 'sand', 'gravel'], 'Grav jord, sand og grus', 'Dig dirt, sand and gravel'],
+    [['grass_block', '➜', 'dirt_path'], 'Lav en sti', 'Make a path']]],
+  [/_hoe$/, [[['dirt', '➜', 'farmland'], 'Gør jorden klar til at plante', 'Get soil ready for planting']]],
+  [/_sword$|_spear$/, [[['⚔️', '🧟'], 'Slås mod monstre', 'Fight monsters']]],
+  [/_(helmet|chestplate|leggings|boots)$/, [[['🛡️', '❤️'], 'Tag den på – du tager mindre skade', 'Wear it – take less damage']]],
+];
