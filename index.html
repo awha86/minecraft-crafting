@@ -15,6 +15,8 @@
            padding: 10px 14px; background: #3a7d2c; border-bottom: 4px solid #24521b; }
   header button { font-size: 28px; width: 56px; height: 56px; border: 0; border-radius: 10px;
                   background: #24521b; color: #fff; }
+  header .flag { background: transparent; font-size: 34px; opacity: .45; }
+  header .flag.on { opacity: 1; background: #24521b; }
   header h1 { margin: 0; font-size: 24px; flex: 1; }
   main { padding: 14px; max-width: 1100px; margin: 0 auto; }
   h2 { font-size: 22px; margin: 22px 0 12px; }
@@ -55,56 +57,78 @@
 <header>
   <button id="back" aria-label="Tilbage">⬅</button>
   <h1 id="title">Hvad kan jeg lave?</h1>
+  <button class="flag" data-l="da" aria-label="Dansk">🇩🇰</button>
+  <button class="flag" data-l="en" aria-label="English">🇬🇧</button>
   <button id="home" aria-label="Forside">🏠</button>
 </header>
 <main id="app"></main>
-<script src="data.js?v=3"></script>
+<script src="data.js?v=4"></script>
 <script>
 const FEATURED = ['diamond','iron_ingot','gold_ingot','emerald','copper_ingot','netherite_ingot',
   'oak_log','oak_planks','stick','cobblestone','coal','redstone','string','leather','white_wool',
   'glass','paper','feather','flint','lapis_lazuli','quartz','slime_ball','bone_meal','sugar_cane'];
 const app = document.getElementById('app');
+const TXT = {
+  da: { title: 'Hvad kan jeg lave?', tap: 'Tryk på en ting', all: 'Alle ting', uses: 'Det kan du lave med den',
+        makes: 'Sådan laver du den', nouse: 'Den kan ikke bruges til at crafte noget.',
+        nomake: 'Den kan ikke craftes – den skal findes, graves eller smeltes.',
+        wood: 'Alle slags træ virker – opskrifterne viser bare eg.' },
+  en: { title: 'What can I make?', tap: 'Tap a thing', all: 'All things', uses: 'What you can make with it',
+        makes: 'How to make it', nouse: 'It can\'t be used for crafting.',
+        nomake: 'It can\'t be crafted – find it, mine it or smelt it.',
+        wood: 'Any kind of wood works – the recipes just show oak.' } };
+let LANG = 'da';
+try { if (localStorage.getItem('lang') === 'en') LANG = 'en'; } catch (e) {}
+const t = k => TXT[LANG][k];
+const nm = n => MC.items[n][LANG];
+function setLang(l) {
+  LANG = l; document.documentElement.lang = l;
+  try { localStorage.setItem('lang', l); } catch (e) {}
+  document.querySelectorAll('.flag').forEach(b => b.classList.toggle('on', b.dataset.l === l));
+  route();
+}
+document.querySelectorAll('.flag').forEach(b => b.onclick = () => setLang(b.dataset.l));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // Billeder ligger på siden selv (tex/); ting uden billede vises med navnet
 function icon(name) {
   const it = MC.items[name];
-  if (!it.t) return `<span class="ic"><span class="txt">${esc(it.da)}</span></span>`;
-  return `<span class="ic"><img loading="lazy" alt="${esc(it.da)}" src="tex/${it.t}.png"
-    data-t="${esc(it.da)}" onerror="this.outerHTML='<span class=txt>'+esc(this.dataset.t)+'</span>'"></span>`;
+  if (!it.t) return `<span class="ic"><span class="txt">${esc(nm(name))}</span></span>`;
+  return `<span class="ic"><img loading="lazy" alt="${esc(nm(name))}" src="tex/${it.t}.png"
+    data-t="${esc(nm(name))}" onerror="this.outerHTML='<span class=txt>'+esc(this.dataset.t)+'</span>'"></span>`;
 }
-const tile = n => `<a class="tile" href="#/i/${n}">${icon(n)}${esc(MC.items[n].da)}</a>`;
+const tile = n => `<a class="tile" href="#/i/${n}">${icon(n)}${esc(nm(n))}</a>`;
 
 function recipeCard(i, hl) {
   const [res, count, grid] = MC.recipes[i];
   const cells = grid.map(g => g
     ? `<a class="slot${g === hl ? ' hl' : ''}" href="#/i/${g}">${icon(g)}</a>`
     : `<span class="slot"></span>`).join('');
-  return `<div class="recipe"><div class="title">${esc(MC.items[res].da)}</div>
+  return `<div class="recipe"><div class="title">${esc(nm(res))}</div>
     <div class="craft"><div class="grid">${cells}</div><span class="arrow">➜</span>
     <a class="slot big" href="#/i/${res}">${icon(res)}${count > 1 ? `<span class="count">${count}</span>` : ''}</a></div></div>`;
 }
 
 function home() {
-  document.getElementById('title').textContent = 'Hvad kan jeg lave?';
-  const all = Object.keys(MC.uses).filter(n => !/^stripped_/.test(n)).sort((a, b) => MC.items[a].da.localeCompare(MC.items[b].da, 'da'));
-  app.innerHTML = `<h2>Tryk på en ting</h2><div class="tiles">${FEATURED.filter(n => MC.items[n]).map(tile).join('')}</div>
-    <h2>Alle ting</h2><div class="tiles small">${all.map(tile).join('')}</div>`;
+  document.getElementById('title').textContent = t('title');
+  const all = Object.keys(MC.uses).filter(n => !/^stripped_/.test(n)).sort((a, b) => nm(a).localeCompare(nm(b), LANG));
+  app.innerHTML = `<h2>${t('tap')}</h2><div class="tiles">${FEATURED.filter(n => MC.items[n]).map(tile).join('')}</div>
+    <h2>${t('all')}</h2><div class="tiles small">${all.map(tile).join('')}</div>`;
 }
 
 function item(name) {
   const it = MC.items[name];
   if (!it) return home();
-  document.getElementById('title').textContent = it.da;
+  document.getElementById('title').textContent = nm(name);
   const uses = (MC.uses[name] || []).slice().sort((a, b) =>
     /smithing_template/.test(MC.recipes[a][0]) - /smithing_template/.test(MC.recipes[b][0]));
   const makes = MC.makes[name] || [];
-  app.innerHTML = `<div class="hero">${icon(name)}<div><div class="name">${esc(it.da)}</div></div></div>
-    ${/_(planks|log|slab|stem)$/.test(name) ? '<p class="empty">💡 Alle slags træ virker – opskrifterne viser bare eg.</p>' : ''}
-    <h2>⛏️ Det kan du lave med den</h2>
-    ${uses.length ? `<div class="recipes">${uses.map(i => recipeCard(i, name)).join('')}</div>` : '<p class="empty">Den kan ikke bruges til at crafte noget.</p>'}
-    <h2>🛠️ Sådan laver du den</h2>
-    ${makes.length ? `<div class="recipes">${makes.map(i => recipeCard(i)).join('')}</div>` : '<p class="empty">Den kan ikke craftes – den skal findes, graves eller smeltes.</p>'}`;
+  app.innerHTML = `<div class="hero">${icon(name)}<div><div class="name">${esc(nm(name))}</div></div></div>
+    ${/_(planks|log|slab|stem)$/.test(name) ? `<p class="empty">💡 ${t('wood')}</p>` : ''}
+    <h2>⛏️ ${t('uses')}</h2>
+    ${uses.length ? `<div class="recipes">${uses.map(i => recipeCard(i, name)).join('')}</div>` : `<p class="empty">${t('nouse')}</p>`}
+    <h2>🛠️ ${t('makes')}</h2>
+    ${makes.length ? `<div class="recipes">${makes.map(i => recipeCard(i)).join('')}</div>` : `<p class="empty">${t('nomake')}</p>`}`;
 }
 
 function route() {
@@ -115,7 +139,7 @@ function route() {
 window.addEventListener('hashchange', route);
 document.getElementById('back').onclick = () => history.length > 1 ? history.back() : (location.hash = '');
 document.getElementById('home').onclick = () => { location.hash = ''; };
-route();
+setLang(LANG);
 if ('serviceWorker' in navigator) {
   const had = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update());
