@@ -55,6 +55,8 @@
   .slot.big { width: 74px; height: 74px; position: relative; }
   .count { position: absolute; right: 4px; bottom: 0; font-weight: 800; font-size: 18px; color: #fff; text-shadow: 2px 2px #333; }
   .empty { opacity: .8; font-size: 18px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #222; color: #fff;
+           padding: 14px 20px; border-radius: 10px; font-size: 18px; z-index: 9; box-shadow: 0 4px 12px #0008; }
   [data-say] { cursor: pointer; }
   [data-say]::after { content: ' 🔊'; font-size: .7em; opacity: .7; }
   .world { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
@@ -78,7 +80,7 @@
   <button id="home" aria-label="Forside">🏠</button>
 </header>
 <main id="app"></main>
-<script src="data.js?v=6"></script>
+<script src="data.js?v=7"></script>
 <script>
 const FEATURED = ['diamond','iron_ingot','gold_ingot','emerald','copper_ingot','netherite_ingot',
   'oak_log','oak_planks','stick','cobblestone','coal','redstone','string','leather','white_wool',
@@ -162,22 +164,42 @@ function worldCard([pics, da, en]) {
 }
 
 // Højtlæsning med tablettens egen stemme
+let VOICES = [];
+function loadVoices() { try { VOICES = speechSynthesis.getVoices(); } catch (e) {} }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch (e) {}
+function toast(msg) {
+  let el = document.getElementById('toast');
+  if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(el._t); el._t = setTimeout(() => { el.hidden = true; }, 5000);
+}
 function say(text) {
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text.replace(/[–×]/g, ' '));
-    u.lang = LANG === 'da' ? 'da-DK' : 'en-GB';
-    const v = speechSynthesis.getVoices().find(v => v.lang.replace('_', '-').toLowerCase().startsWith(LANG));
-    if (v) u.voice = v;
-    u.rate = 0.9;
+  if (!('speechSynthesis' in window)) return toast('🔇 Tale virker ikke i denne browser');
+  loadVoices();
+  const want = LANG === 'da' ? 'da' : 'en';
+  const v = VOICES.find(v => v.lang.replace('_', '-').toLowerCase().startsWith(want + '-') && v.localService)
+         || VOICES.find(v => v.lang.replace('_', '-').toLowerCase().startsWith(want));
+  const u = new SpeechSynthesisUtterance(text.replace(/[–×]/g, ' '));
+  u.lang = LANG === 'da' ? 'da-DK' : 'en-GB';
+  if (v) u.voice = v;
+  u.rate = 0.9;
+  let started = false;
+  u.onstart = () => { started = true; };
+  u.onerror = ev => toast('🔇 Fejl i tale: ' + (ev.error || 'ukendt'));
+  speechSynthesis.cancel();
+  setTimeout(() => {               // Chrome på Android sluger tale, der startes lige efter cancel()
+    speechSynthesis.resume();
     speechSynthesis.speak(u);
-  } catch (e) {}
+    setTimeout(() => {
+      if (!started) toast(v ? '🔇 Ingen lyd – tjek lydstyrken' :
+        `🔇 Ingen ${LANG === 'da' ? 'dansk' : 'engelsk'} stemme fundet (${VOICES.length} stemmer i alt)`);
+    }, 2000);
+  }, 120);
 }
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-say]');
   if (el) { e.preventDefault(); say(el.dataset.say); }
 });
-try { speechSynthesis.getVoices(); } catch (e) {}
 
 function item(name) {
   const it = MC.items[name];
