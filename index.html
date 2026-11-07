@@ -22,6 +22,8 @@
   .search { width: 100%; font-size: 24px; padding: 14px 16px; border-radius: 10px; border: 4px solid #555;
             background: #fff; color: #222; margin-top: 4px; }
   .search:focus { outline: none; border-color: #3a7d2c; }
+  .dice { font-size: 30px; background: #555; border: 0; border-radius: 10px; padding: 2px 12px; margin-left: 10px; vertical-align: middle; }
+  .dice:active { transform: rotate(90deg); }
   h2 { font-size: 22px; margin: 22px 0 12px; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
   .tile { background: #8b8b8b; border: 4px solid; border-color: #c6c6c6 #555 #555 #c6c6c6;
@@ -80,11 +82,20 @@
   <button id="home" aria-label="Forside">🏠</button>
 </header>
 <main id="app"></main>
-<script src="data.js?v=7"></script>
+<script src="data.js?v=8"></script>
 <script>
-const FEATURED = ['diamond','iron_ingot','gold_ingot','emerald','copper_ingot','netherite_ingot',
-  'oak_log','oak_planks','stick','cobblestone','coal','redstone','string','leather','white_wool',
-  'glass','paper','feather','flint','lapis_lazuli','quartz','slime_ball','bone_meal','sugar_cane'];
+// Tilfældige ting på forsiden: nye hver gang appen åbnes, ved 🏠 og ved 🎲
+const COLORS = /^(orange|magenta|light_blue|yellow|lime|pink|gray|light_gray|cyan|purple|blue|brown|green|red|black)_/;
+const POOL = Object.keys(MC.items).filter(n => MC.items[n].t && (MC.uses[n] || MC.world[n]) &&
+  !COLORS.test(n) && !/^(stripped_|waxed_|exposed_|weathered_|oxidized_)|smithing_template|_(slab|stairs|wall|button|pressure_plate|fence_gate)$/.test(n) &&
+  !/^(spruce|birch|jungle|acacia|dark_oak|mangrove|cherry|pale_oak|bamboo|crimson|warped)_/.test(n));
+let FEATURED = [];
+function shuffle() {
+  const a = POOL.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  FEATURED = a.slice(0, 24);
+}
+shuffle();
 const app = document.getElementById('app');
 const TXT = {
   da: { title: 'Hvad kan jeg lave?', tap: 'Tryk på en ting', all: 'Alle ting', uses: 'Det kan du lave med den',
@@ -134,9 +145,10 @@ function home() {
   document.getElementById('title').textContent = t('title');
   const all = [...new Set([...Object.keys(MC.uses), ...Object.keys(MC.makes), ...Object.keys(MC.world)])].filter(n => !/^stripped_/.test(n)).sort((a, b) => nm(a).localeCompare(nm(b), LANG));
   app.innerHTML = `<input id="q" class="search" type="search" placeholder="🔍 ${t('search')}" autocomplete="off" value="${esc(QUERY)}">
-    <div id="feat"><h2>${t('tap')}</h2><div class="tiles">${FEATURED.filter(n => MC.items[n]).map(tile).join('')}</div></div>
+    <div id="feat"><h2>${t('tap')} <button id="dice" class="dice" aria-label="Nye ting">🎲</button></h2><div class="tiles">${FEATURED.map(tile).join('')}</div></div>
     <h2 id="allh">${t('all')}</h2><div id="all" class="tiles small">${all.map(tile).join('')}</div>
     <p id="none" class="empty" hidden>${t('none')}</p>`;
+  document.getElementById('dice').onclick = () => { shuffle(); home(); };
   const q = document.getElementById('q');
   q.oninput = () => filter(q.value);
   filter(QUERY);
@@ -225,7 +237,7 @@ function route() {
 }
 window.addEventListener('hashchange', route);
 document.getElementById('back').onclick = () => history.length > 1 ? history.back() : (location.hash = '');
-document.getElementById('home').onclick = () => { QUERY = ''; location.hash = ''; route(); };
+document.getElementById('home').onclick = () => { QUERY = ''; shuffle(); location.hash = ''; route(); };
 setLang(LANG);
 if ('serviceWorker' in navigator) {
   const had = !!navigator.serviceWorker.controller;
