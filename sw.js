@@ -1,5 +1,5 @@
-// App-filer caches ved installation; billeder fra wikien caches første gang de vises
-const V = 'crafting-v1';
+// App-filer caches ved installation; billeder caches første gang de vises
+const V = 'crafting-v2';
 const SHELL = ['./', 'index.html', 'data.js', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)));
@@ -11,8 +11,8 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (url.hostname.endsWith('minecraft.wiki') && url.pathname.includes('Special:FilePath')) {
-    e.respondWith(caches.open('wiki-img').then(async c => {
+  if (url.hostname === 'cdn.jsdelivr.net' || url.hostname === 'raw.githubusercontent.com') {
+    e.respondWith(caches.open('tex-img').then(async c => {
       const hit = await c.match(e.request);
       if (hit) return hit;
       const res = await fetch(e.request);

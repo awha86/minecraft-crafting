@@ -63,23 +63,22 @@
 const FEATURED = ['diamond','iron_ingot','gold_ingot','emerald','copper_ingot','netherite_ingot',
   'oak_log','oak_planks','stick','cobblestone','coal','redstone','string','leather','white_wool',
   'glass','paper','feather','flint','lapis_lazuli','quartz','slime_ball','bone_meal','sugar_cane'];
-const FILE = 'https://minecraft.wiki/w/Special:FilePath/Invicon_';
 const app = document.getElementById('app');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const title = n => n.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join('_');
 
-// Billeder hentes fra Minecraft Wiki; prøver flere filnavne, ellers vises navnet som tekst
+// Billeder: spillets egne teksturer, hentet fra CDN (med GitHub som reserve); ellers vises navnet
+const TEX = ['https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.21.11/assets/minecraft/textures/',
+             'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.11/assets/minecraft/textures/'];
 function icon(name) {
   const it = MC.items[name];
-  const a = it.en.replace(/ /g, '_'), b = title(name);
-  const cands = [...new Set([a, b])].flatMap(n => [FILE + n + '.png', FILE + n + '.gif']);
-  return `<span class="ic"><img loading="lazy" alt="${esc(it.da)}" src="${cands[0]}"
-    data-c="${esc(JSON.stringify(cands.slice(1)))}" data-t="${esc(it.da)}" onerror="nextImg(this)"></span>`;
+  if (!it.t) return `<span class="ic"><span class="txt">${esc(it.da)}</span></span>`;
+  return `<span class="ic"><img loading="lazy" alt="${esc(it.da)}" src="${TEX[0]}${it.t}.png"
+    data-c="${esc(JSON.stringify([TEX[1] + it.t + '.png']))}" data-t="${esc(it.da)}" onerror="nextImg(this)"></span>`;
 }
 function nextImg(img) {
   const c = JSON.parse(img.dataset.c);
   if (c.length) { img.dataset.c = JSON.stringify(c.slice(1)); img.src = c[0]; }
-  else img.outerHTML = `<span class="txt">${img.dataset.t}</span>`;
+  else img.outerHTML = `<span class="txt">${esc(img.dataset.t)}</span>`;
 }
 const tile = n => `<a class="tile" href="#/i/${n}">${icon(n)}${esc(MC.items[n].da)}</a>`;
 
