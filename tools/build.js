@@ -52,6 +52,8 @@ for (const rs of Object.values(md.recipes)) {
     } else if (r.ingredients) {
       r.ingredients.forEach((c, i) => { if (i < 9) grid[i] = use(c); });
     } else continue;
+    // Kun PC (Java): findes ikke på Switch/tablet (Bedrock)
+    if (['spectral_arrow'].includes((md.items[r.result.id] || {}).name)) continue;
     const res = use(r.result.id);
     if (!res || grid.every(g => !g)) continue;
     const key = res + '|' + grid.join(',');
