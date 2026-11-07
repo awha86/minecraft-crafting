@@ -1,28 +1,20 @@
-// App-filer caches ved installation; billeder caches første gang de vises
-const V = 'crafting-v2';
-const SHELL = ['./', 'index.html', 'data.js', 'manifest.json', 'icon-192.png', 'icon-512.png'];
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)));
-  self.skipWaiting();
-});
+// Version 3: alt ligger på siden selv. Netværk først (uden browser-cache), cache når offline.
+const V = 'crafting-v3';
+self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))));
-  self.clients.claim();
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k))))
+    .then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (url.hostname === 'cdn.jsdelivr.net' || url.hostname === 'raw.githubusercontent.com') {
-    e.respondWith(caches.open('tex-img').then(async c => {
-      const hit = await c.match(e.request);
-      if (hit) return hit;
-      const res = await fetch(e.request);
-      if (res.ok || res.type === 'opaque') c.put(e.request, res.clone());
+  if (url.origin !== location.origin) return;
+  const isTex = url.pathname.includes('/tex/');
+  e.respondWith(caches.open(V).then(async c => {
+    if (isTex) { const hit = await c.match(e.request); if (hit) return hit; }
+    try {
+      const res = await fetch(e.request, isTex ? undefined : { cache: 'no-cache' });
+      if (res.ok) c.put(e.request, res.clone());
       return res;
-    }));
-  } else if (url.origin === location.origin) {
-    // netværk først, så opdateringer slår igennem; cache når offline
-    e.respondWith(fetch(e.request).then(res => {
-      const copy = res.clone(); caches.open(V).then(c => c.put(e.request, copy)); return res;
-    }).catch(() => caches.match(e.request)));
-  }
+    } catch { return (await c.match(e.request)) || Response.error(); }
+  }));
 });

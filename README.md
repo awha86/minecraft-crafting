@@ -3,5 +3,5 @@
 Lille PWA: tryk på en Minecraft-ting og se, hvad du kan crafte med den.
 
 - Opskrifter: minecraft-data (1.21.11), danske navne fra spillets sprogfil
-- Billeder: spillets teksturer fra InventivetalentDev/minecraft-assets via jsDelivr (hentes live, caches offline)
+- Billeder: spillets teksturer (fra InventivetalentDev/minecraft-assets) ligger i `tex/`
 - Hosting: læg filerne i roden af et repo → Settings → Pages → Deploy from branch `main` / root

@@ -58,7 +58,7 @@
   <button id="home" aria-label="Forside">🏠</button>
 </header>
 <main id="app"></main>
-<script src="data.js"></script>
+<script src="data.js?v=3"></script>
 <script>
 const FEATURED = ['diamond','iron_ingot','gold_ingot','emerald','copper_ingot','netherite_ingot',
   'oak_log','oak_planks','stick','cobblestone','coal','redstone','string','leather','white_wool',
@@ -66,19 +66,12 @@ const FEATURED = ['diamond','iron_ingot','gold_ingot','emerald','copper_ingot','
 const app = document.getElementById('app');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-// Billeder: spillets egne teksturer, hentet fra CDN (med GitHub som reserve); ellers vises navnet
-const TEX = ['https://cdn.jsdelivr.net/gh/InventivetalentDev/minecraft-assets@1.21.11/assets/minecraft/textures/',
-             'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.11/assets/minecraft/textures/'];
+// Billeder ligger på siden selv (tex/); ting uden billede vises med navnet
 function icon(name) {
   const it = MC.items[name];
   if (!it.t) return `<span class="ic"><span class="txt">${esc(it.da)}</span></span>`;
-  return `<span class="ic"><img loading="lazy" alt="${esc(it.da)}" src="${TEX[0]}${it.t}.png"
-    data-c="${esc(JSON.stringify([TEX[1] + it.t + '.png']))}" data-t="${esc(it.da)}" onerror="nextImg(this)"></span>`;
-}
-function nextImg(img) {
-  const c = JSON.parse(img.dataset.c);
-  if (c.length) { img.dataset.c = JSON.stringify(c.slice(1)); img.src = c[0]; }
-  else img.outerHTML = `<span class="txt">${esc(img.dataset.t)}</span>`;
+  return `<span class="ic"><img loading="lazy" alt="${esc(it.da)}" src="tex/${it.t}.png"
+    data-t="${esc(it.da)}" onerror="this.outerHTML='<span class=txt>'+esc(this.dataset.t)+'</span>'"></span>`;
 }
 const tile = n => `<a class="tile" href="#/i/${n}">${icon(n)}${esc(MC.items[n].da)}</a>`;
 
@@ -123,7 +116,11 @@ window.addEventListener('hashchange', route);
 document.getElementById('back').onclick = () => history.length > 1 ? history.back() : (location.hash = '');
 document.getElementById('home').onclick = () => { location.hash = ''; };
 route();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+if ('serviceWorker' in navigator) {
+  const had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update());
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (had) location.reload(); });
+}
 </script>
 </body>
 </html>
