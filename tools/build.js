@@ -39,28 +39,45 @@ function use(id) {
   return it.name;
 }
 
+// Opskrifter: Switch/tablet (Bedrock) har forrang. Mojangs officielle filer (bedrock.js) dækker de fleste;
+// opskrifter der er indbygget i spillet (senge, egeknapper, uldfarvning …) findes kun i PC-data og bruges derfra.
+const JAVA_ONLY = new Set(['spectral_arrow', 'furnace_minecart']); // ting der slet ikke findes på Switch/tablet
 const recipes = []; // [result, count, grid(9)]
 const seen = new Set();
-for (const rs of Object.values(md.recipes)) {
-  for (const r of rs) {
-    const grid = Array(9).fill(null);
-    if (r.inShape) {
-      const rows = r.inShape;
-      const h = rows.length, w = Math.max(...rows.map(x => x.length));
-      const oy = h === 1 ? 1 : 0, ox = w === 1 ? 1 : 0; // centrér små opskrifter
-      rows.forEach((row, y) => row.forEach((c, x) => { grid[(y + oy) * 3 + x + ox] = use(c); }));
-    } else if (r.ingredients) {
-      r.ingredients.forEach((c, i) => { if (i < 9) grid[i] = use(c); });
-    } else continue;
-    // Kun PC (Java): findes ikke på Switch/tablet (Bedrock)
-    if (['spectral_arrow'].includes((md.items[r.result.id] || {}).name)) continue;
-    const res = use(r.result.id);
-    if (!res || grid.every(g => !g)) continue;
-    const key = res + '|' + grid.join(',');
-    if (seen.has(key)) continue;
-    seen.add(key);
-    recipes.push([res, r.result.count || 1, grid]);
-  }
+const byName = n => use((md.itemsByName[n] || md.blocksByName[n] || {}).id);
+function add(res, count, grid) {
+  if (!res || grid.every(g => !g)) return;
+  const key = res + '|' + grid.join(',');
+  if (seen.has(key)) return;
+  seen.add(key);
+  recipes.push([res, count, grid]);
+}
+const javaRecipes = [];
+for (const rs of Object.values(md.recipes)) for (const r of rs) {
+  const grid = Array(9).fill(null);
+  if (r.inShape) {
+    const h = r.inShape.length, w = Math.max(...r.inShape.map(x => x.length));
+    const oy = h === 1 ? 1 : 0, ox = w === 1 ? 1 : 0;
+    r.inShape.forEach((row, y) => row.forEach((c, x) => { grid[(y + oy) * 3 + x + ox] = c; }));
+  } else if (r.ingredients) r.ingredients.forEach((c, i) => { if (i < 9) grid[i] = c; });
+  else continue;
+  const name = (md.items[r.result.id] || {}).name;
+  if (!name || JAVA_ONLY.has(name)) continue;
+  javaRecipes.push({ result: name, count: r.result.count || 1, grid: grid.map(c => c == null ? null : (md.items[c] || {}).name) });
+}
+const bed = require('./bedrock.js').recipes;
+const bedByResult = {};
+for (const r of bed) (bedByResult[r.result] = bedByResult[r.result] || []).push(r);
+const javaResults = new Set(javaRecipes.map(r => r.result));
+for (const [res, rs] of Object.entries(bedByResult)) {
+  // "en af flere"-ingredienser (tags) vises bedre med PC-opskriftens konkrete ting, hvis den findes
+  if (rs.every(r => r.usesTag) && javaResults.has(res)) continue;
+  for (const r of rs) add(byName(r.result), r.count, r.grid.map(g => g && byName(g)));
+}
+for (const r of javaRecipes) {
+  const bs = bedByResult[r.result];
+  if (bs && !bs.every(b => b.usesTag)) continue;
+  add(byName(r.result), r.count, r.grid.map(g => g && byName(g)));
 }
 
 // Træsorter: behold kun én variant (helst eg) af opskrifter der bare skifter træsort
